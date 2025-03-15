@@ -97,7 +97,7 @@ omikuji_results = [
     },
 ]
 
-@register("astrbot_plugin_omikuji", "Shouugou", "浅草寺抽签插件", "1.0.1", "repo url")
+@register("astrbot_plugin_omikuji", "Shouugou", "浅草寺抽签插件", "1.1.0", "repo url")
 class OmikujiPlugin(Star):
     @filter.command("抽签")
     async def omikuji(self, event: AstrMessageEvent):
