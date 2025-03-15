@@ -14,7 +14,7 @@ omikuji_results = [
     {"result": "大凶", "description": "运势不佳，需特别小心。"},
 ]
 
-@register("omikuji", "Shouugou", "浅草寺抽签插件", "1.0.0", "repo url")
+@register("astrbot_plugin_omikuji", "Shouugou", "浅草寺抽签插件", "1.0.0", "repo url")
 class OmikujiPlugin(Star):
     @filter.command("抽签")
     async def omikuji(self, event: AstrMessageEvent):
