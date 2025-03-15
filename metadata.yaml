@@ -1,6 +1,6 @@
-name: astrbot_plugin_omikuji # 这是你的插件的唯一识别名。
-desc: 这是一个浅草寺抽签插件，模拟日本浅草寺的抽签功能。 # 插件简短描述
-help: 输入 /抽签 随机抽取一个签文，获取运势提示。 # 插件的帮助信息
-version: v1.0.0 # 插件版本号。格式：v1.1.1 或者 v1.1
-author: Shouugou # 作者
-repo: https://github.com/Shouugou/astrbot_plugin_drawing # 插件的仓库地址
+name: astrbot_plugin_omikuji
+desc: 这是一个浅草寺抽签插件，模拟日本浅草寺的抽签功能。
+help: 输入 /抽签 随机抽取一个签文，获取运势提示。
+version: v1.0.1
+author: Shouugou
+repo: https://github.com/Shouugou/astrbot_plugin_drawing
