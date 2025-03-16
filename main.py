@@ -6,7 +6,7 @@ from astrbot.api.star import Star, register
 # 导入签文数据
 from .sensoji_data import sensoji_results
 
-@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.0.1", "repo url")
+@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.0.2", "repo url")
 class SensojiPlugin(Star):
     @filter.command("抽签")
     async def sensoji(self, event: AstrMessageEvent):
