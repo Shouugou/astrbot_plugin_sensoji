@@ -97,7 +97,7 @@ sensoji_results = [
     },
 ]
 
-@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.1.0", "repo url")
+@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.0.1", "repo url")
 class SensojiPlugin(Star):
     @filter.command("抽签")
     async def sensoji(self, event: AstrMessageEvent):
