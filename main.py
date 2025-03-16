@@ -4,7 +4,7 @@ from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.star import Star, register
 
 # 模拟浅草寺的签文
-omikuji_results = [
+sensoji_results = [
     {
         "result": "大吉",
         "description": "万事如意，福星高照。今日无论做什么都会顺利，是充满希望的一天。",
@@ -98,20 +98,20 @@ omikuji_results = [
 ]
 
 @register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.1.0", "repo url")
-class OmikujiPlugin(Star):
+class SensojiPlugin(Star):
     @filter.command("抽签")
-    async def omikuji(self, event: AstrMessageEvent):
+    async def sensoji(self, event: AstrMessageEvent):
         '''浅草寺抽签'''
 
         # 随机选择一个签文
-        selected_omikuji = random.choice(omikuji_results)
+        selected_sensoji = random.choice(sensoji_results)
 
         # 构建输出结果
         result_message = (
-            f"抽签结果是：{selected_omikuji['result']}\n"
-            f"运势描述：{selected_omikuji['description']}\n"
-            f"诗句：{selected_omikuji['poem']}\n"
-            f"建议：{selected_omikuji['advice']}"
+            f"抽签结果是：{selected_sensoji['result']}\n"
+            f"运势描述：{selected_sensoji['description']}\n"
+            f"诗句：{selected_sensoji['poem']}\n"
+            f"建议：{selected_sensoji['advice']}"
         )
 
         # 返回结果
