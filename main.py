@@ -28,7 +28,7 @@ def save_data(data):
 # 初始化数据
 user_daily_results = load_data()
 
-@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.1.1", "repo url")
+@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.1.2", "repo url")
 class SensojiPlugin(Star):
     @filter.command("抽签")
     async def sensoji(self, event: AstrMessageEvent):
@@ -54,10 +54,11 @@ class SensojiPlugin(Star):
 
             # 构建输出结果
             result_message = (
-                f"抽签结果是：{selected_sensoji['result']}\n"
-                f"运势描述：{selected_sensoji['description']}\n"
-                f"诗句：{selected_sensoji['poem']}\n"
-                f"建议：{selected_sensoji['advice']}"
+                f"抽签结果是：{selected_sensoji['result']}\n\n"
+                f"诗文：{selected_sensoji['poetry']}\n\n"
+                f"解释：{selected_sensoji['interpretation']}\n\n"
+                f"建议：{selected_sensoji['suggestion']}\n\n"
+                f"运势细节：{selected_sensoji['horoscope_details']}"
             )
 
             # 存储用户当天的抽签结果
