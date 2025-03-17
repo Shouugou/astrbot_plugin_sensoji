@@ -95,27 +95,24 @@ class SensojiPlugin(Star):
         result = self.get_or_generate_result(user_id, today, is_change_fortune)
         yield event.plain_result(result)
 
-    @llm_tool("drawing_a_fortune")
-    async def drawing_a_fortune(self, event: AstrMessageEvent):
-        """Randomly draw a fortune from Sensoji Temple."""
-        async for result in self.select_fortune(event):
-            yield result
-
-    @llm_tool("improving_luck")
-    async def improving_luck(self, event: AstrMessageEvent):
-        """Randomly change a fortune from Sensoji Temple. For changing fortune and improving luck."""
-        async for result in self.change_fortune(event):
-            yield result
-
-    @llm_tool("explain_fortune")
+    @command("解签")
     async def explain_fortune(self, event: AstrMessageEvent):
-        """Explain the result of a fortune from Sensoji Temple.
-            Fetch the user's fortune for today, and pass it to the LLM (Language Model)
-            for interpretation and explanation. This allows for a detailed and nuanced
-            breakdown of the fortune's meaning, context, and possible advice.
-        """
         user_id = event.get_sender_id()
         today = str(date.today())
         result = self.get_or_generate_result(user_id, today)
+        logger.info(result)
         return result
+
+    # @llm_tool("select_fortune_tool")
+    # async def select_fortune_tool(self, event: AstrMessageEvent):
+    #     """Randomly draw a fortune from Sensoji Temple."""
+    #     async for result in self.select_fortune(event):
+    #         yield result
+    #
+    # @llm_tool("change_fortune_tool")
+    # async def change_fortune_tool(self, event: AstrMessageEvent):
+    #     """Randomly change a fortune from Sensoji Temple. For changing fortune and improving luck."""
+    #     async for result in self.change_fortune(event):
+    #         yield result
+
 
