@@ -45,7 +45,7 @@ class SensojiPlugin(Star):
             f"运势细节：{selected_result['horoscope_details']}"
         )
 
-    def get_or_generate_result(self, user_id, today, result_data, is_change_fortune=False):
+    def get_or_generate_result(self, user_id, today, is_change_fortune=False, result_data=sensoji_results):
         """获取用户的抽签结果或生成新的签文
 
         Args:
@@ -81,7 +81,7 @@ class SensojiPlugin(Star):
         """浅草寺抽签"""
         user_id = event.get_sender_id()
         today = str(date.today())
-        result = self.get_or_generate_result(user_id, today, sensoji_results)
+        result = self.get_or_generate_result(user_id, today)
         yield event.plain_result(result)
 
     @command("转运")
@@ -92,7 +92,7 @@ class SensojiPlugin(Star):
 
         # 检查用户是否已有抽签结果；无则抽签，有则重新抽取转运签
         is_change_fortune = user_id in user_daily_results and user_daily_results[user_id]['date'] == today
-        result = self.get_or_generate_result(user_id, today, sensoji_results, is_change_fortune)
+        result = self.get_or_generate_result(user_id, today, is_change_fortune)
         yield event.plain_result(result)
 
     @llm_tool("drawing_a_fortune")
@@ -106,4 +106,12 @@ class SensojiPlugin(Star):
         """Randomly change a fortune from Sensoji Temple. For changing fortune and improving luck."""
         async for result in self.change_fortune(event):
             yield result
+
+    @llm_tool("explain_fortune_result")
+    async def explain_fortune_result(self, event: AstrMessageEvent):
+        """Explain the result of a fortune from Sensoji Temple."""
+        user_id = event.get_sender_id()
+        today = str(date.today())
+        result = self.get_or_generate_result(user_id, today)
+        return result
 
