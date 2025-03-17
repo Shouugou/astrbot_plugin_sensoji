@@ -109,7 +109,11 @@ class SensojiPlugin(Star):
 
     @llm_tool("explain_fortune")
     async def explain_fortune(self, event: AstrMessageEvent):
-        """Explain the result of a fortune from Sensoji Temple."""
+        """Explain the result of a fortune from Sensoji Temple.
+            Fetch the user's fortune for today, and pass it to the LLM (Language Model)
+            for interpretation and explanation. This allows for a detailed and nuanced
+            breakdown of the fortune's meaning, context, and possible advice.
+        """
         user_id = event.get_sender_id()
         today = str(date.today())
         result = self.get_or_generate_result(user_id, today)
