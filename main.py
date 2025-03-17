@@ -26,7 +26,7 @@ def save_data(data):
 # 初始化数据
 user_daily_results = load_data()
 
-@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.1.2", "repo url")
+@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.2.0", "repo url")
 class SensojiPlugin(Star):
     def get_fortune_message(self, selected_result):
         """构建签文结果信息
