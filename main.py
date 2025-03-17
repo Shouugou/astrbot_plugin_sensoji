@@ -97,7 +97,7 @@ class SensojiPlugin(Star):
 
     @llm_tool("explain_fortune")
     async def explain_fortune(self, event: AstrMessageEvent):
-        """Explain the result of a fortune from Sensoji Temple."""
+        """Explain the result of a fortune from Sensoji Temple.应当在`解签``解释一下抽的签`时被调用。"""
         user_id = event.get_sender_id()
         today = str(date.today())
 
