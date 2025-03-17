@@ -1,12 +1,10 @@
 import random
-import json
 from datetime import date
 from pathlib import Path
-from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.api.star import Star, register
 
+from astrbot.api.all import *
 # 导入签文数据
-from .sensoji_data import sensoji_results
+from data.plugins.astrbot_plugin_sensoji.sensoji_data import sensoji_results
 
 # 定义 JSON 文件路径（存储在插件目录下）
 DATA_FILE = Path(__file__).parent / "user_daily_results.json"
@@ -30,43 +28,82 @@ user_daily_results = load_data()
 
 @register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.1.2", "repo url")
 class SensojiPlugin(Star):
-    @filter.command("抽签")
-    async def sensoji(self, event: AstrMessageEvent):
-        '''浅草寺抽签'''
+    def get_fortune_message(self, selected_result):
+        """构建签文结果信息
 
-        # 获取用户ID
-        user_id = event.get_sender_id()
+        Args:
+            selected_result (dict): 抽签结果数据.
 
-        # 获取当前日期
-        today = str(date.today())
+        Returns:
+            str: 构建的签文消息.
+        """
+        return (
+            f"{selected_result['result']}\n\n"
+            f"诗文：{selected_result['poetry']}\n\n"
+            f"解析：{selected_result['interpretation']}\n\n"
+            f"建议：{selected_result['suggestion']}\n\n"
+            f"运势细节：{selected_result['horoscope_details']}"
+        )
 
-        # 检查用户是否已经有当天的抽签结果
+    def get_or_generate_result(self, user_id, today, result_data, is_change_fortune=False):
+        """获取用户的抽签结果或生成新的签文
+
+        Args:
+            user_id (str): 用户 ID.
+            today (str): 当前日期.
+            result_data (list): 用于生成签文的列表数据.
+            is_change_fortune (bool): 是否生成转运签.
+
+        Returns:
+            str: 返回当前用户的抽签或转运结果.
+        """
+        # 检查用户是否已有当天结果
         if user_id in user_daily_results:
-            # 如果存储的日期不是今天，清除该用户的抽签结果
-            if user_daily_results[user_id]['date'] != today:
+            if user_daily_results[user_id]['date'] != today:  # 如果日期过期，清除旧记录
                 del user_daily_results[user_id]
-                save_data(user_daily_results)  # 更新文件
+                save_data(user_daily_results)
 
-        # 如果用户没有当天的抽签结果，生成新的结果
-        if user_id not in user_daily_results:
-            # 随机选择一个签文
-            selected_sensoji = random.choice(sensoji_results)
+        # 如果用户没有当天的结果，或生成的签为转运签
+        if user_id not in user_daily_results or is_change_fortune:
+            selected_result = random.choice(result_data)
+            result_message = self.get_fortune_message(selected_result)
 
-            # 构建输出结果
-            result_message = (
-                f"抽签结果是：{selected_sensoji['result']}\n\n"
-                f"诗文：{selected_sensoji['poetry']}\n\n"
-                f"解释：{selected_sensoji['interpretation']}\n\n"
-                f"建议：{selected_sensoji['suggestion']}\n\n"
-                f"运势细节：{selected_sensoji['horoscope_details']}"
-            )
-
-            # 存储用户当天的抽签结果
             user_daily_results[user_id] = {
                 'date': today,
                 'result': result_message
             }
-            save_data(user_daily_results)  # 更新文件
+            save_data(user_daily_results)  # 保存结果
 
-        # 返回结果
-        yield event.plain_result(user_daily_results[user_id]['result'])
+        return user_daily_results[user_id]['result']
+
+    @command("抽签")
+    async def select_fortune(self, event: AstrMessageEvent):
+        """浅草寺抽签"""
+        user_id = event.get_sender_id()
+        today = str(date.today())
+        result = self.get_or_generate_result(user_id, today, sensoji_results)
+        yield event.plain_result(result)
+
+    @command("转运")
+    async def change_fortune(self, event: AstrMessageEvent):
+        """浅草寺转运"""
+        user_id = event.get_sender_id()
+        today = str(date.today())
+
+        # 检查用户是否已有抽签结果；无则抽签，有则重新抽取转运签
+        is_change_fortune = user_id in user_daily_results and user_daily_results[user_id]['date'] == today
+        result = self.get_or_generate_result(user_id, today, sensoji_results, is_change_fortune)
+        yield event.plain_result(result)
+
+    @llm_tool("drawing_a_fortune")
+    async def drawing_a_fortune(self, event: AstrMessageEvent):
+        """Randomly draw a fortune from Sensoji Temple."""
+        async for result in self.select_fortune(event):
+            yield result
+
+    @llm_tool("improving_luck")
+    async def improving_luck(self, event: AstrMessageEvent):
+        """Randomly change a fortune from Sensoji Temple. For changing fortune and improving luck."""
+        async for result in self.change_fortune(event):
+            yield result
+
