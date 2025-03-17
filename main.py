@@ -107,8 +107,8 @@ class SensojiPlugin(Star):
         async for result in self.change_fortune(event):
             yield result
 
-    @llm_tool("explain_fortune_result")
-    async def explain_fortune_result(self, event: AstrMessageEvent):
+    @llm_tool("explain_fortune")
+    async def explain_fortune(self, event: AstrMessageEvent):
         """Explain the result of a fortune from Sensoji Temple."""
         user_id = event.get_sender_id()
         today = str(date.today())
