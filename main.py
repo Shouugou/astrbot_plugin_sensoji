@@ -99,20 +99,23 @@ class SensojiPlugin(Star):
     async def explain_fortune(self, event: AstrMessageEvent):
         user_id = event.get_sender_id()
         today = str(date.today())
+
+        have_fortune = user_id in user_daily_results and user_daily_results[user_id]['date'] == today
+        if not have_fortune:
+            return "还没有抽签，请先抽签！"
         result = self.get_or_generate_result(user_id, today)
-        logger.info(result)
         return result
 
-    # @llm_tool("select_fortune_tool")
-    # async def select_fortune_tool(self, event: AstrMessageEvent):
-    #     """Randomly draw a fortune from Sensoji Temple."""
-    #     async for result in self.select_fortune(event):
-    #         yield result
-    #
-    # @llm_tool("change_fortune_tool")
-    # async def change_fortune_tool(self, event: AstrMessageEvent):
-    #     """Randomly change a fortune from Sensoji Temple. For changing fortune and improving luck."""
-    #     async for result in self.change_fortune(event):
-    #         yield result
+    @llm_tool("select_fortune_tool")
+    async def select_fortune_tool(self, event: AstrMessageEvent):
+        """Randomly draw a fortune from Sensoji Temple."""
+        async for result in self.select_fortune(event):
+            yield result
+
+    @llm_tool("change_fortune_tool")
+    async def change_fortune_tool(self, event: AstrMessageEvent):
+        """Randomly change a fortune from Sensoji Temple. For changing fortune and improving luck."""
+        async for result in self.change_fortune(event):
+            yield result
 
 
