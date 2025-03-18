@@ -26,6 +26,64 @@ def save_data(data):
 
 @register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.2.2", "repo url")
 class SensojiPlugin(Star):
+
+    TMPL = '''
+    
+    <style>
+    body {
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        background-color: #f8f8f8;
+        text-align: center;
+        padding: 40px;
+        margin: 0;
+    }
+    h1 {
+        color: #d32f2f;
+        font-size: 3em;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+        color: #555;
+        font-size: 2em;
+        margin-top: 10px;
+        margin-bottom: 30px;
+    }
+    .content {
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        margin: 0 auto;
+        max-width: 800px;
+    }
+    .content p {
+        font-size: 1.5em;
+        color: #333;
+        line-height: 1.8;
+        text-align: left;
+        margin: 0;
+    }
+    .content p br {
+        display: block;
+        content: "";
+        margin-bottom: 15px;
+    }
+</style>
+    
+    <body>
+        <h1>浅草寺抽签</h1>
+        <h2>{{ title }}</h2>
+        <div class="content">
+            <p>
+                {{ message }}
+            </p>
+        </div>
+    </body>
+    
+    '''
+
     def get_fortune_message(self, selected_result):
         """构建签文结果信息
 
@@ -92,7 +150,6 @@ class SensojiPlugin(Star):
 
         # 获取当前对话 ID
         curr_cid = await self.context.conversation_manager.get_curr_conversation_id(event.unified_msg_origin)
-        conversation = None
         context = []
 
         if curr_cid:
@@ -123,7 +180,9 @@ class SensojiPlugin(Star):
         user_id = event.get_sender_id()
         today = str(date.today())
         result = self.get_or_generate_result(user_id, today)
-        yield event.plain_result(result)
+
+        url = await self.html_render(self.TMPL, {"title": "抽签结果" ,"message": result.replace("\n", "<br>")})
+        yield event.image_result(url)
 
     @command("转运")
     async def change_fortune(self, event: AstrMessageEvent):
@@ -135,7 +194,9 @@ class SensojiPlugin(Star):
         # 检查用户是否已有抽签结果；无则抽签，有则重新抽取转运签
         is_change_fortune = user_id in user_daily_results and user_daily_results[user_id]['date'] == today
         result = self.get_or_generate_result(user_id, today, is_change_fortune)
-        yield event.plain_result(result)
+
+        url = await self.html_render(self.TMPL, {"title": "转运结果", "message": result.replace("\n", "<br>")})
+        yield event.image_result(url)
 
     @command("解签")
     async def explain_fortune(self, event: AstrMessageEvent):
