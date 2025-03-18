@@ -76,6 +76,36 @@ class SensojiPlugin(Star):
 
         return user_daily_results[user_id]['result']
 
+    async def _llm_fortune_explanation(self, event: AstrMessageEvent, message: str):
+        """使用 LLM 对抽签进行解读"""
+        # 定义解签提示模板
+        fortune_prompt = (
+            f"回复要求：\n"
+            f"1. 如果用户尚未抽签，告知用户`需要先抽签，再进行解签`。\n"
+            f"2. 如果用户已抽签，则分析签文内容并提供详细解释，包括抽签结果的意义、可能的象征以及建议。\n"
+            f"3. 基于解签内容提炼出重点建议，提供一些具体与实际问题相关的指导意见。\n"
+            f"4. 保持语气友好、亲切，确保签文解析详细且易于理解。\n"
+            f"5. 基于角色以合适的语气、称呼等，生成符合人设的回答。\n\n"
+            f"内容: {message}"
+        )
+
+        # 调用签文获取，以确保记录无误
+        conversation_id = await self.context.conversation_manager.get_curr_conversation_id(event.unified_msg_origin)
+        conversation = await self.context.conversation_manager.get_conversation(event.unified_msg_origin,
+                                                                                conversation_id)
+
+        # 调用 LLM 解析签文
+        yield event.request_llm(
+            prompt=fortune_prompt,
+            func_tool_manager=None,
+            session_id=event.session_id,
+            contexts=json.loads(conversation.history),
+            system_prompt=self.context.provider_manager.selected_default_persona.get("prompt", ""),
+            image_urls=[],
+            conversation=conversation,
+            )
+
+
     @command("抽签")
     async def select_fortune(self, event: AstrMessageEvent):
         """浅草寺抽签"""
@@ -95,8 +125,22 @@ class SensojiPlugin(Star):
         result = self.get_or_generate_result(user_id, today, is_change_fortune)
         yield event.plain_result(result)
 
-    @llm_tool("explain_fortune")
+    @command("解签")
     async def explain_fortune(self, event: AstrMessageEvent):
+        """LLM 解签"""
+        user_id = event.get_sender_id()
+        today = str(date.today())
+
+        message = (
+            self.get_or_generate_result(user_id, today)
+            if user_id in user_daily_results and user_daily_results[user_id]['date'] == today
+            else "今日尚未抽签"
+        )
+        async for resp in self._llm_fortune_explanation(event, message):
+            yield resp
+
+    @llm_tool("explain_fortune")
+    async def explain_fortune_tool(self, event: AstrMessageEvent):
         """Explain the result of a fortune from Sensoji Temple.应当在`解签``解释一下抽的签`时被调用。"""
         user_id = event.get_sender_id()
         today = str(date.today())
