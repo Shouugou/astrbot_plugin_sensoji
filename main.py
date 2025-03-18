@@ -24,7 +24,7 @@ def save_data(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
-@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.2.1", "repo url")
+@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.2.2", "repo url")
 class SensojiPlugin(Star):
     def get_fortune_message(self, selected_result):
         """构建签文结果信息
