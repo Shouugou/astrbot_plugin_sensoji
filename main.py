@@ -90,17 +90,27 @@ class SensojiPlugin(Star):
             f"内容: {message}"
         )
 
-        # 调用签文获取，以确保记录无误
-        conversation_id = await self.context.conversation_manager.get_curr_conversation_id(event.unified_msg_origin)
-        conversation = await self.context.conversation_manager.get_conversation(event.unified_msg_origin,
-                                                                                conversation_id)
+        # 获取当前对话 ID
+        curr_cid = await self.context.conversation_manager.get_curr_conversation_id(event.unified_msg_origin)
+        conversation = None
+        context = []
+
+        if curr_cid:
+            # 如果当前对话 ID 存在，获取对话对象
+            conversation = await self.context.conversation_manager.get_conversation(event.unified_msg_origin, curr_cid)
+            if conversation and conversation.history:
+                context = json.loads(conversation.history)
+        else:
+            # 如果当前对话 ID 不存在，创建一个新的对话
+            curr_cid = await self.context.conversation_manager.new_conversation(event.unified_msg_origin)
+            conversation = await self.context.conversation_manager.get_conversation(event.unified_msg_origin, curr_cid)
 
         # 调用 LLM 解析签文
         yield event.request_llm(
             prompt=fortune_prompt,
             func_tool_manager=None,
             session_id=event.session_id,
-            contexts=json.loads(conversation.history),
+            contexts=context,
             system_prompt=self.context.provider_manager.selected_default_persona.get("prompt", ""),
             image_urls=[],
             conversation=conversation,
