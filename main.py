@@ -23,10 +23,8 @@ def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-# 初始化数据
-user_daily_results = load_data()
 
-@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.2.0", "repo url")
+@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.2.1", "repo url")
 class SensojiPlugin(Star):
     def get_fortune_message(self, selected_result):
         """构建签文结果信息
@@ -57,6 +55,9 @@ class SensojiPlugin(Star):
         Returns:
             str: 返回当前用户的抽签或转运结果.
         """
+
+        user_daily_results = load_data()
+
         # 检查用户是否已有当天结果
         if user_id in user_daily_results:
             if user_daily_results[user_id]['date'] != today:  # 如果日期过期，清除旧记录
@@ -119,6 +120,7 @@ class SensojiPlugin(Star):
         """浅草寺转运"""
         user_id = event.get_sender_id()
         today = str(date.today())
+        user_daily_results = load_data()
 
         # 检查用户是否已有抽签结果；无则抽签，有则重新抽取转运签
         is_change_fortune = user_id in user_daily_results and user_daily_results[user_id]['date'] == today
@@ -130,6 +132,7 @@ class SensojiPlugin(Star):
         """LLM 解签"""
         user_id = event.get_sender_id()
         today = str(date.today())
+        user_daily_results = load_data()
 
         message = (
             self.get_or_generate_result(user_id, today)
@@ -144,6 +147,7 @@ class SensojiPlugin(Star):
         """Explain the result of a fortune from Sensoji Temple.应当在`解签``解释一下抽的签`时被调用。"""
         user_id = event.get_sender_id()
         today = str(date.today())
+        user_daily_results = load_data()
 
         have_fortune = user_id in user_daily_results and user_daily_results[user_id]['date'] == today
         if not have_fortune:
