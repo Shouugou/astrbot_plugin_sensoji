@@ -1,4 +1,5 @@
 import random
+import re
 from datetime import date
 from pathlib import Path
 
@@ -26,8 +27,14 @@ def save_data(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
-@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.2.3", "repo url")
+@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.2.4", "repo url")
 class SensojiPlugin(Star):
+
+    def remove_escaped_emojis(self,text):
+        # 匹配类似 &&confused&& 的转义字符串
+        escaped_pattern = re.compile(r"&&\w+&&")
+        return escaped_pattern.sub("", text)
+
     def get_fortune_message(self, selected_result):
         """构建签文结果信息
 
@@ -114,7 +121,7 @@ class SensojiPlugin(Star):
             system_prompt=self.context.provider_manager.selected_default_persona.get("prompt", "")
         )
 
-        url = await self.html_render(TMPL, {"title": "解签结果", "message": llm_response.completion_text.replace("\n", "<br>")})
+        url = await self.html_render(TMPL, {"title": "解签结果", "message": self.remove_escaped_emojis(llm_response.completion_text.replace("\n", "<br>"))})
         yield event.image_result(url)
 
 
