@@ -6,6 +6,8 @@ from astrbot.api.all import *
 # 导入签文数据
 from data.plugins.astrbot_plugin_sensoji.sensoji_data import sensoji_results
 
+from data.plugins.astrbot_plugin_sensoji.templates import TMPL
+
 # 定义 JSON 文件路径（存储在插件目录下）
 DATA_FILE = Path(__file__).parent / "user_daily_results.json"
 
@@ -24,66 +26,8 @@ def save_data(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
-@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.2.2", "repo url")
+@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.2.3", "repo url")
 class SensojiPlugin(Star):
-
-    TMPL = '''
-    
-    <style>
-    body {
-        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-        background-color: #f8f8f8;
-        text-align: center;
-        padding: 40px;
-        margin: 0;
-    }
-    h1 {
-        color: #d32f2f;
-        font-size: 3em;
-        font-weight: bold;
-        margin-bottom: 20px;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    h2 {
-        color: #555;
-        font-size: 2em;
-        margin-top: 10px;
-        margin-bottom: 30px;
-    }
-    .content {
-        background-color: #fff;
-        padding: 30px;
-        border-radius: 15px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        margin: 0 auto;
-        max-width: 800px;
-    }
-    .content p {
-        font-size: 1.5em;
-        color: #333;
-        line-height: 1.8;
-        text-align: left;
-        margin: 0;
-    }
-    .content p br {
-        display: block;
-        content: "";
-        margin-bottom: 15px;
-    }
-</style>
-    
-    <body>
-        <h1>浅草寺抽签</h1>
-        <h2>{{ title }}</h2>
-        <div class="content">
-            <p>
-                {{ message }}
-            </p>
-        </div>
-    </body>
-    
-    '''
-
     def get_fortune_message(self, selected_result):
         """构建签文结果信息
 
@@ -143,7 +87,7 @@ class SensojiPlugin(Star):
             f"1. 如果用户尚未抽签，告知用户`需要先抽签，再进行解签`。\n"
             f"2. 如果用户已抽签，则分析签文内容并提供详细解释，包括抽签结果的意义、可能的象征以及建议。\n"
             f"3. 基于解签内容提炼出重点建议，提供一些具体与实际问题相关的指导意见。\n"
-            f"4. 保持语气友好、亲切，确保签文解析详细且易于理解。\n"
+            f"4. 保持语气友好、亲切，确保签文解析准确且易于理解，尽量使用简短的一段话结束。\n"
             f"5. 基于角色以合适的语气、称呼等，生成符合人设的回答。\n\n"
             f"内容: {message}"
         )
@@ -163,15 +107,15 @@ class SensojiPlugin(Star):
             conversation = await self.context.conversation_manager.get_conversation(event.unified_msg_origin, curr_cid)
 
         # 调用 LLM 解析签文
-        yield event.request_llm(
+        llm_response = await self.context.get_using_provider().text_chat(
             prompt=fortune_prompt,
-            func_tool_manager=None,
-            session_id=event.session_id,
             contexts=context,
-            system_prompt=self.context.provider_manager.selected_default_persona.get("prompt", ""),
             image_urls=[],
-            conversation=conversation,
-            )
+            system_prompt=self.context.provider_manager.selected_default_persona.get("prompt", "")
+        )
+
+        url = await self.html_render(TMPL, {"title": "解签结果", "message": llm_response.completion_text.replace("\n", "<br>")})
+        yield event.image_result(url)
 
 
     @command("抽签")
@@ -181,7 +125,7 @@ class SensojiPlugin(Star):
         today = str(date.today())
         result = self.get_or_generate_result(user_id, today)
 
-        url = await self.html_render(self.TMPL, {"title": "抽签结果" ,"message": result.replace("\n", "<br>")})
+        url = await self.html_render(TMPL, {"title": "抽签结果" ,"message": result.replace("\n", "<br>")})
         yield event.image_result(url)
 
     @command("转运")
@@ -195,7 +139,7 @@ class SensojiPlugin(Star):
         is_change_fortune = user_id in user_daily_results and user_daily_results[user_id]['date'] == today
         result = self.get_or_generate_result(user_id, today, is_change_fortune)
 
-        url = await self.html_render(self.TMPL, {"title": "转运结果", "message": result.replace("\n", "<br>")})
+        url = await self.html_render(TMPL, {"title": "转运结果", "message": result.replace("\n", "<br>")})
         yield event.image_result(url)
 
     @command("解签")
@@ -220,9 +164,11 @@ class SensojiPlugin(Star):
         today = str(date.today())
         user_daily_results = load_data()
 
-        have_fortune = user_id in user_daily_results and user_daily_results[user_id]['date'] == today
-        if not have_fortune:
-            return "还没有抽签，请先抽签！"
-        result = self.get_or_generate_result(user_id, today)
-        return result
+        message = (
+            self.get_or_generate_result(user_id, today)
+            if user_id in user_daily_results and user_daily_results[user_id]['date'] == today
+            else "今日尚未抽签"
+        )
+        async for resp in self._llm_fortune_explanation(event, message):
+            yield resp
 
