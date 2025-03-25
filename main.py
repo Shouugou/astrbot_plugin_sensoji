@@ -42,7 +42,7 @@ def save_change_counts(data):
     with open(CHANGE_COUNT_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.2.4", "repo url")
+@register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.2.5", "repo url")
 class SensojiPlugin(Star):
 
     def __init__(self, context: Context, config: AstrBotConfig):
