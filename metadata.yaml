@@ -1,6 +1,6 @@
 name: astrbot_plugin_sensoji
 desc: 这是一个浅草寺抽签插件，模拟日本浅草寺的抽签功能。
 help: 输入 /抽签 随机抽取一个签文，获取包含吉凶结果和运势描述的提示；若想改变运势，可使用 转运 指令重新抽签；抽取签文后，输入 解签 或 解释一下抽的签，即可调用智能解签功能，获取签文的详细解读，助您更好地理解运势指引！
-version: v1.2.4
+version: v1.2.5
 author: Shouugou
 repo: https://github.com/Shouugou/astrbot_plugin_sensoji
