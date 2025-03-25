@@ -11,6 +11,7 @@ from data.plugins.astrbot_plugin_sensoji.templates import TMPL
 
 # 定义 JSON 文件路径（存储在插件目录下）
 DATA_FILE = Path(__file__).parent / "user_daily_results.json"
+CHANGE_COUNT_FILE = Path(__file__).parent / "user_change_counts.json"
 
 # 加载数据
 def load_data():
@@ -27,8 +28,27 @@ def save_data(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
+# 加载转运次数数据
+def load_change_counts():
+    """加载用户转运次数记录"""
+    if CHANGE_COUNT_FILE.exists():
+        with open(CHANGE_COUNT_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+# 保存转运次数数据
+def save_change_counts(data):
+    """保存用户转运次数记录"""
+    with open(CHANGE_COUNT_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
 @register("astrbot_plugin_sensoji", "Shouugou", "浅草寺抽签插件", "1.2.4", "repo url")
 class SensojiPlugin(Star):
+
+    def __init__(self, context: Context, config: AstrBotConfig):
+        super().__init__(context)
+        self.config = config
+        self.max_change_times = self.config.get("max_change_fortune_times", 3)
 
     def remove_escaped_emojis(self,text):
         # 匹配类似 &&confused&& 的转义字符串
@@ -141,12 +161,39 @@ class SensojiPlugin(Star):
         user_id = event.get_sender_id()
         today = str(date.today())
         user_daily_results = load_data()
+        change_counts = load_change_counts()
+
+        # 初始化用户转运次数记录
+        if user_id not in change_counts:
+            change_counts[user_id] = {"date": today, "count": 0}
+
+        # 检查是否是新的一天
+        if change_counts[user_id]["date"] != today:
+            change_counts[user_id] = {"date": today, "count": 0}
+
+        # 检查转运次数限制
+        if self.max_change_times > 0 and change_counts[user_id]["count"] >= self.max_change_times:
+            url = await self.html_render(TMPL, {
+                "title": "转运失败",
+                "message": f"今日转运次数已达上限（{self.max_change_times}次）"
+            })
+            yield event.image_result(url)
+            return
 
         # 检查用户是否已有抽签结果；无则抽签，有则重新抽取转运签
         is_change_fortune = user_id in user_daily_results and user_daily_results[user_id]['date'] == today
         result = self.get_or_generate_result(user_id, today, is_change_fortune)
 
-        url = await self.html_render(TMPL, {"title": "转运结果", "message": result.replace("\n", "<br>")})
+        # 增加转运次数计数
+        if is_change_fortune:
+            change_counts[user_id]["count"] += 1
+            save_change_counts(change_counts)
+
+        url = await self.html_render(TMPL, {
+            "title": "转运结果",
+            "message": result.replace("\n", "<br>"),
+            "footer": f"今日已转运 {change_counts[user_id]['count']}/{self.max_change_times if self.max_change_times > 0 else '∞'} 次"
+        })
         yield event.image_result(url)
 
     @command("解签")

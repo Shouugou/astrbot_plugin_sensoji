@@ -1,0 +1,8 @@
+{
+    "max_change_fortune_times": {
+        "description": "每日最大转运次数（0表示不限制）",
+        "type": "int",
+        "default": 3,
+        "hint": "设置用户每日可转运的最大次数，设为0则不限制次数"
+    }
+}
