@@ -48,7 +48,8 @@ class SensojiPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
         self.config = config
-        self.max_change_times = self.config.get("max_change_fortune_times", 3)
+        self.enable_change = self.config.get("enable_change_fortune", True)
+        self.max_change_times = self.config.get("max_change_fortune_times", 3) if self.enable_change else 0
 
     def remove_escaped_emojis(self,text):
         # 匹配类似 &&confused&& 的转义字符串
@@ -144,6 +145,22 @@ class SensojiPlugin(Star):
         url = await self.html_render(TMPL, {"title": "解签结果", "message": self.remove_escaped_emojis(llm_response.completion_text.replace("\n", "<br>"))})
         yield event.image_result(url)
 
+    @command("抽签帮助")
+    async def help(self, event: AstrMessageEvent):
+        """显示抽签插件帮助信息"""
+        help_msg = """
+    浅草寺抽签插件使用说明：
+
+    1. 抽签 - 每日抽取一次签文
+    2. 解签 - 解读今日抽到的签文
+    {transport_help}
+    """.format(
+            transport_help="3. 转运 - 重新抽取签文(每日限{}次)".format(
+                "∞" if self.max_change_times == 0 else self.max_change_times
+            ) if self.enable_change else "3. 转运 - (功能已禁用)"
+        )
+
+        yield event.plain_result(help_msg.strip())
 
     @command("抽签")
     async def select_fortune(self, event: AstrMessageEvent):
@@ -158,6 +175,15 @@ class SensojiPlugin(Star):
     @command("转运")
     async def change_fortune(self, event: AstrMessageEvent):
         """浅草寺转运"""
+        if not self.enable_change:
+            url = await self.html_render(TMPL, {
+                "title": "功能不可用",
+                "message": "当前管理员已禁用转运功能",
+                "footer": "如需使用请联系管理员"
+            })
+            yield event.image_result(url)
+            return
+
         user_id = event.get_sender_id()
         today = str(date.today())
         user_daily_results = load_data()

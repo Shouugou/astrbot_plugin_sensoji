@@ -1,4 +1,10 @@
 {
+    "enable_change_fortune": {
+        "description": "是否启用转运功能",
+        "type": "bool",
+        "default": true,
+        "hint": "关闭后用户将无法使用转运功能"
+    },
     "max_change_fortune_times": {
         "description": "每日最大转运次数（0表示不限制）",
         "type": "int",
